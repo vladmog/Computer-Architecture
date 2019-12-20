@@ -12,6 +12,10 @@ POP = 0b01000110
 CALL  = 0b01010000 # 00000rrr
 RET = 0b00010001
 ADD = 0b10100000 # 00000aaa 00000bbb
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
 
 class CPU:
     """Main CPU class."""
@@ -19,7 +23,7 @@ class CPU:
     def __init__(self):
         """Construct a new CPU."""
         self.pc = 0
-        self.fl = 0
+        self.fl = 0b00000000 #00000LGE
         self.ram = [0] * 256 # 256 bytes
         self.reg = [0] * 9
 
@@ -35,7 +39,40 @@ class CPU:
         self.branchtable[CALL] = self.handle_call
         self.branchtable[RET] = self.handle_ret
         self.branchtable[ADD] = self.handle_add
-        pass
+        # SPRINT
+        self.branchtable[CMP] = self.handle_cmp
+        self.branchtable[JMP] = self.handle_jmp
+        self.branchtable[JEQ] = self.handle_jeq
+        self.branchtable[JNE] = self.handle_jne
+
+        
+
+    def handle_jne(self):
+        # If E flag is clear (false, 0), jump to the address stored in the given register.
+        register = self.ram[self.pc + 1]
+        if (self.fl & 0b00000001) == 0:
+            self.pc = self.reg[register]
+        else:
+            self.pc += 2
+
+
+    def handle_jeq(self):
+        # If equal flag is set (true), jump to the address stored in the given register.
+        register = self.ram[self.pc + 1]
+        if (self.fl & 0b00000001) > 0:
+            self.pc = self.reg[register]
+        else:
+            self.pc += 2
+
+    def handle_cmp(self):
+        registerA = self.ram[self.pc + 1]
+        registerB = self.ram[self.pc + 2]
+        self.alu("CMP", registerA, registerB)
+        self.pc += 3
+    
+    def handle_jmp(self):
+        register = self.ram[self.pc + 1]
+        self.pc = self.reg[register]
 
     def handle_ldi(self):
         register = self.ram[self.pc + 1]
@@ -46,7 +83,7 @@ class CPU:
     
     def handle_prn(self):
         register = self.ram[self.pc + 1]
-        print(f"Printing {self.reg[register]} from register {register}")
+        print(f"=====================\nPrinting {self.reg[register]} from register {register}\n======================")
         self.pc += 2
 
     def handle_mul(self):
@@ -144,10 +181,29 @@ class CPU:
             print(f"REG = {self.reg}")
             print(f"Adding reg[{reg_a}] which is {self.reg[reg_a]} with reg[{reg_b}] which is {self.reg[reg_b]}")
             self.reg[reg_a] += self.reg[reg_b]
+
         elif op == "MUL":
             print(f"REG = {self.reg}")
             print(f"Multiplying reg[{reg_a}] which is {self.reg[reg_a]} with reg[{reg_b}] which is {self.reg[reg_b]}")
             self.reg[reg_a] = self.reg[reg_a] * self.reg[reg_b]
+
+        elif op == "CMP":
+            # 00000LGE
+            print(f"REG = {self.reg}")
+            print(f"Comparing reg[{reg_a}] which is {self.reg[reg_a]} with reg[{reg_b}] which is {self.reg[reg_b]}")
+            if self.reg[reg_a] == self.reg[reg_b]:
+                # If they are equal, set the Equal E flag to 1, otherwise set it to 0.
+                print("A == B")
+                self.fl = 0b00000001
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                print("A > B")
+                self.fl = 0b00000010
+                # If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                print("A < B")
+                self.fl = 0b00000100
+                # If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
+
         else:
             raise Exception("Unsupported ALU operation")
 

@@ -17,7 +17,29 @@ class CPU:
         self.fl = 0
         self.ram = [0] * 256 # 256 bytes
         self.reg = [0] * 9
+        self.branchtable = {}
+        self.branchtable[LDI] = self.handle_ldi
+        self.branchtable[PRN] = self.handle_prn
+        self.branchtable[MUL] = self.handle_mul
         pass
+
+    def handle_ldi(self):
+        register = self.ram[self.pc + 1]
+        value = self.ram[self.pc + 2]
+        print(f"Adding value {value} to register {register}")
+        self.pc += 3
+        self.reg[register] = value
+    
+    def handle_prn(self):
+        register = self.ram[self.pc + 1]
+        print(self.reg[register])
+        self.pc += 2
+
+    def handle_mul(self):
+        register1 = self.ram[self.pc + 1]
+        register2 = self.ram[self.pc + 2]
+        self.alu("MUL", register1, register2)
+        self.pc += 3
 
     def ram_read(self, pc):
         print(self.ram[pc])
@@ -102,27 +124,32 @@ class CPU:
         while running:
             if self.ram[self.pc] == HLT:
                 running = False
-            elif self.ram[self.pc] == LDI:
-                register = self.ram[self.pc + 1]
-                value = self.ram[self.pc + 2]
-                print(f"Adding value {value} to register {register}")
-                self.pc += 3
-                self.reg[register] = value
-            elif self.ram[self.pc] == PRN:
-                register = self.ram[self.pc + 1]
-                print(self.reg[register])
-                self.pc += 2
-            elif self.ram[self.pc] == MUL:
-                register1 = self.ram[self.pc + 1]
-                register2 = self.ram[self.pc + 2]
-                self.alu("MUL", register1, register2)
-                self.pc += 3
+            else:
+                self.branchtable[self.ram[self.pc]]()  # Substituting if-elif cascade with branchtable
 
-            
+            # elif self.ram[self.pc] == LDI:
+            #     # register = self.ram[self.pc + 1]
+            #     # value = self.ram[self.pc + 2]
+            #     # print(f"Adding value {value} to register {register}")
+            #     # self.pc += 3
+            #     # self.reg[register] = value
+            #     # ==========================
+            #     self.branchtable[LDI]()
+            # elif self.ram[self.pc] == PRN:
+            #     # register = self.ram[self.pc + 1]
+            #     # print(self.reg[register])
+            #     # self.pc += 2
+            #     # ===========================
+            #     self.branchtable[PRN]()
+            # elif self.ram[self.pc] == MUL:
+            #     # register1 = self.ram[self.pc + 1]
+            #     # register2 = self.ram[self.pc + 2]
+            #     # self.alu("MUL", register1, register2)
+            #     # self.pc += 3
+            #     # ===========================
+            #     self.branchtable[MUL]()
 
 
 
 
         pass
-
-

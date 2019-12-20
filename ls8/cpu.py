@@ -7,6 +7,8 @@ HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
 MUL = 0b10100010
+PUSH = 0b01000101
+POP = 0b01000110
 
 class CPU:
     """Main CPU class."""
@@ -17,10 +19,14 @@ class CPU:
         self.fl = 0
         self.ram = [0] * 256 # 256 bytes
         self.reg = [0] * 9
+        self.reg[7] = self.ram[0xF4]
+        self.sp = self.reg[7]
         self.branchtable = {}
         self.branchtable[LDI] = self.handle_ldi
         self.branchtable[PRN] = self.handle_prn
         self.branchtable[MUL] = self.handle_mul
+        self.branchtable[PUSH] = self.handle_push
+        self.branchtable[POP] = self.handle_pop
         pass
 
     def handle_ldi(self):
@@ -32,7 +38,7 @@ class CPU:
     
     def handle_prn(self):
         register = self.ram[self.pc + 1]
-        print(self.reg[register])
+        print(f"Printing {self.reg[register]} from register {register}")
         self.pc += 2
 
     def handle_mul(self):
@@ -40,6 +46,20 @@ class CPU:
         register2 = self.ram[self.pc + 2]
         self.alu("MUL", register1, register2)
         self.pc += 3
+    
+    def handle_push(self):
+        self.sp -= 1
+        register = self.ram[self.pc + 1]
+        self.ram[self.sp] = self.reg[register]
+        print(f"Pushing {self.reg[register]} from register {register} onto the Stack")
+        self.pc += 2
+
+    def handle_pop(self):
+        register = self.ram[self.pc + 1]
+        print(f"Popping {self.ram[self.sp]} off the stack into register {register}")
+        self.reg[register] = self.ram[self.sp]
+        self.sp += 1
+        self.pc += 2
 
     def ram_read(self, pc):
         print(self.ram[pc])

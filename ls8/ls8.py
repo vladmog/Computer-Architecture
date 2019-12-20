@@ -3,6 +3,11 @@
 """Main."""
 
 import sys
+
+# program = sys.argv[1]
+# print(f"Program = {program}")
+
+
 from cpu import *
 
 cpu = CPU()
